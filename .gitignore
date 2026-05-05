@@ -216,3 +216,19 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+#VeriBell secrets
+.env
+mosquitto-config/passwords
+ring-mqtt-data/
+frames/
+unknown_faces/
+data/
+logs/
+known_faces/
+__pycache__/
+*.pyc
+mosquitto-data/
+mosquitto-log/
+rtsp url.txt
+config/settings.json
