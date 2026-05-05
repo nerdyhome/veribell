@@ -1,0 +1,49 @@
+{
+  "general": {
+    "mqtt_broker": "mosquitto",
+    "mqtt_port": 1883,
+    "mqtt_user": "DEIN_USER",
+    "mqtt_password": "DEIN_PASSWORT",
+    "log_level": "INFO"
+  },
+  "recognition": {
+    "min_hits": 2,
+    "similarity_threshold": 0.85,
+    "initial_stream_delay_seconds": 1.5
+  },
+  "notifications": {
+    "home_assistant_webhook_url": "http://HA_IP:8123/api/webhook/DEIN_ID",
+    "voice_monkey_api_key": "DEIN_API_KEY"
+  },
+  "triggers": [
+    {
+      "name": "Haustür Klingel",
+      "topic": "ring/LOCATION_ID/camera/DEVICE_ID/ding/state",
+      "condition": "ON",
+      "actions": [
+        {
+          "type": "capture",
+          "source": "front_door"
+        }
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "name": "Eigentümer öffnet Tor",
+      "condition": "known",
+      "required_attribute": "open_gate",
+      "actions": [
+        {
+          "type": "shelly_http",
+          "url": "http://SHELLY_IP/relay/0?turn=on&timer=3"
+        },
+        {
+          "type": "voice_monkey",
+          "monkey": "Begruessung",
+          "announcement": "Willkommen zuhause, {display_name}!"
+        }
+      ]
+    }
+  ]
+}

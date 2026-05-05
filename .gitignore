@@ -1,0 +1,17 @@
+.env
+mosquitto-config/passwords
+ring-mqtt-data/
+frames/
+unknown_faces/
+data/
+logs/
+known_faces/
+__pycache__/
+*.pyc
+mosquitto-data/
+mosquitto-log/
+backup_bilder/
+rtsp url.txt
+config/settings.json
+compreface/
+.venv/

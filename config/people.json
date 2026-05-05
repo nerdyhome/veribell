@@ -1,0 +1,48 @@
+{
+  "markus": {
+    "display_name": "Markus",
+    "role": "owner",
+    "open_gate": true,
+    "announcements": {
+      "doorbell": "Markus ist da. Bitte den roten Teppich ausrollen."
+    }
+  },
+  "karen": {
+    "display_name": "Karen",
+    "role": "owner",
+    "open_gate": true,
+    "announcements": {
+      "doorbell": "Karen ist da. Alle benehmen sich jetzt bitte."
+    }
+  },
+  "marlon": {
+    "display_name": "Marlon",
+    "role": "owner",
+    "open_gate": true
+  },
+  "lyan": {
+    "display_name": "Lyan",
+    "role": "owner",
+    "open_gate": true
+  },
+  "merle": {
+    "display_name": "Merle",
+    "role": "owner",
+    "open_gate": true
+  },
+  "kaya": {
+    "display_name": "Kaya",
+    "role": "owner",
+    "open_gate": true
+  },
+  "levi": {
+    "display_name": "Levi",
+    "role": "owner",
+    "open_gate": true
+  },
+  "christiane": {
+    "display_name": "Christiane",
+    "role": "friend",
+    "open_gate": false
+  }
+}
