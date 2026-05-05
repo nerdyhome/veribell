@@ -13,6 +13,8 @@ Seamless Integration: Connects Ring (via MQTT), Home Assistant (via Webhooks), a
 Web Dashboard: A modern UI to monitor cameras, manage visitors, and visually configure recognition zones (crops).
 Privacy First: All video processing and recognition data stay on your local hardware.
 
+GUI, easy Installer and AirBNB integration coming soon
+
 🏗️ Architecture
 
 VeriBell is built as a modular microservice environment using Docker:
@@ -21,15 +23,36 @@ Ring-MQTT: Bridge between Ring Cloud and local MQTT/RTSP.
 go2rtc: High-performance streaming server for video distribution.
 VeriBell Core: Python-based recognition engine and web server.  
 
+## 🛠️ Recommended Hardware
+To get the most out of VeriBell, I recommend the following hardware (affiliate links):
+*   **Doorbell**: [Ring Video Doorbell 4] https://amzn.to/4t9jYsB
+*   **Gate Control**: [Shelly Plus 1] https://amzn.to/4ngfFuu
+*   **Server**: (Authors selection)
+         Budget:
+               [Trycoo WI-6 Mini PC] https://amzn.to/4d9tndW
+         Recommendation:
+               [GMKtec Ryzen 5 7640HS] https://amzn.to/3OVKurz
+         Enthusiast:
+               [GMKtec K8 Plus Mini PC Ryzen 7 8845HS] https://amzn.to/4w7IxZK
+
+
 🚀 Quick Start
 
-1. PrerequisitesDocker and Docker Compose installed.A Ring account and a Ring-MQTT token.(Optional) A CompreFace or DeepFace instance for AI processing.
-2. InstallationClone this repository.Copy settings.json.example to settings.json and fill in your credentials.Add your authorized users to people.json.
+1. Prerequisites
+   Docker and Docker Compose installed.
+   A Ring account and a Ring-MQTT token.
+   (Optional) A CompreFace or DeepFace instance for AI processing.
+2. Installation
+   Clone this repository.
+   Rename settings-git.json to settings.json and fill in your credentials.
+   Add your authorized users to people.json.
 3. Launch the stack:
    
    docker-compose up -d
+
+4. Launch veribell_service.py via powershell and wait for warming up (can take up to 2 Minutes depending on your machine)
    
-4. Configuration
+5. Configuration
 Access the web dashboard at http://localhost:5000 to configure your camera crops and monitor events.  
 
 🛡️ Privacy & Security
