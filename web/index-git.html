@@ -1,0 +1,2188 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>VeriBell Console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #11182d;
+      --panel2: #16213d;
+      --text: #e8ecf8;
+      --muted: #97a3ba;
+      --accent: #6ee7b7;
+      --danger: #fb7185;
+      --warn: #fbbf24;
+      --line: rgba(255,255,255,.09);
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(110,231,183,.16), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(96,165,250,.14), transparent 35%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 26px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(11,16,32,.72);
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .preset-grid button {
+      padding: 9px 10px;
+      font-size: 12px;
+    }
+    .preset-grid button:last-child {
+      grid-column: 1 / -1;
+    }
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: rgba(9, 14, 28, .78);
+      backdrop-filter: blur(14px);
+      padding: 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .crop-save-status {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.035);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .crop-save-status.active {
+      display: block;
+    }
+
+    .crop-save-status.dirty {
+      border-color: rgba(251,191,36,.35);
+      background: rgba(251,191,36,.08);
+      color: var(--text);
+    }
+
+    .crop-save-status.saved {
+      border-color: rgba(110,231,183,.35);
+      background: rgba(110,231,183,.08);
+      color: var(--text);
+    }
+
+    .crop-save-status.error {
+      border-color: rgba(251,113,133,.45);
+      background: rgba(251,113,133,.09);
+      color: var(--text);
+    }
+
+    .crop-warning {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(251,191,36,.35);
+      background: rgba(251,191,36,.08);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .crop-warning.active {
+      display: block;
+    }
+
+    .crop-warning.error {
+      border-color: rgba(251,113,133,.45);
+      background: rgba(251,113,133,.09);
+    }
+    
+    .sidebar .brand {
+      margin-bottom: 28px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav button {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid transparent;
+      padding: 12px 14px;
+      border-radius: 14px;
+    }
+
+    .nav button.active {
+      background: rgba(110,231,183,.12);
+      color: var(--accent);
+      border-color: rgba(110,231,183,.22);
+    }
+
+    .nav button:hover {
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    .topbar {
+      padding: 22px 32px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(11,16,32,.72);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -.04em;
+    }
+
+    .page-subtitle {
+      color: var(--muted);
+      margin-top: 4px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        height: auto;
+        position: static;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      padding: 12px 10px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .brand-logo {
+      display: block;
+      width: 100%;
+      max-width: 210px;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .brand-subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #6ee7b7, #60a5fa);
+      box-shadow: 0 0 30px rgba(110,231,183,.35);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: -.03em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
+    main {
+      padding: 28px 32px 60px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    input {
+      width: 100%;
+      background: #090e1c;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      outline: none;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .formgrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .formgrid .wide {
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 760px) {
+      .formgrid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 16px;
+      letter-spacing: -.02em;
+    }
+
+    .metric {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    button {
+      background: var(--accent);
+      color: #042014;
+      border: 0;
+      padding: 11px 14px;
+      border-radius: 14px;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    button.danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    select, textarea {
+      width: 100%;
+      background: #090e1c;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 520px;
+      resize: vertical;
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .item {
+      background: rgba(255,255,255,.035);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 13px 14px;
+    }
+
+    .item strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(110,231,183,.12);
+      color: var(--accent);
+      border: 1px solid rgba(110,231,183,.18);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { color: var(--muted); font-weight: 650; }
+
+    img.preview {
+      width: 100%;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #060913;
+      min-height: 220px;
+      object-fit: contain;
+    }
+
+    .notice {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .layout { grid-template-columns: 1fr; }
+      header { padding: 20px; }
+      main { padding: 20px; }
+    }
+
+    @media (max-width: 560px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .crop-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .crop-canvas-wrap {
+      display: none;
+      position: relative;
+      width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #060913;
+      user-select: none;
+    }
+
+    .crop-preview {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .crop-box {
+      position: absolute;
+      left: 20%;
+      top: 18%;
+      width: 60%;
+      height: 75%;
+      border: 2px solid var(--accent);
+      background: rgba(110, 231, 183, 0.10);
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+      cursor: move;
+    }
+
+    .crop-handle {
+      position: absolute;
+      right: -7px;
+      bottom: -7px;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: var(--accent);
+      border: 2px solid #052017;
+      cursor: nwse-resize;
+    }
+
+    .crop-side-card {
+      box-shadow: none;
+      position: sticky;
+      top: 92px;
+    }
+
+    @media (max-width: 980px) {
+      .crop-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .crop-loading {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      margin: 12px 0;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border: 3px solid rgba(255,255,255,.18);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      flex: 0 0 auto;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    .crop-test-result {
+      display: none;
+      margin: 12px 0;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.035);
+      color: var(--text);
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+
+    .crop-test-result.success {
+      display: block;
+      border-color: rgba(110,231,183,.35);
+      background: rgba(110,231,183,.08);
+    }
+
+    .crop-test-result.warn {
+      display: block;
+      border-color: rgba(251,191,36,.35);
+      background: rgba(251,191,36,.08);
+    }
+
+    .crop-test-result.error {
+      display: block;
+      border-color: rgba(251,113,133,.35);
+      background: rgba(251,113,133,.08);
+    }
+
+  </style>
+</head>
+
+<body>
+    <div class="app">
+      <aside class="sidebar">
+      <div class="brand">
+        <img src="/static/img/veribell_logo_hell.png" alt="VeriBell Logo" class="brand-logo">
+        <div class="brand-subtitle">AI Door &amp; Access Console</div>
+      </div>
+        <nav class="nav">
+          <button class="active" data-page="dashboard" onclick="showPage('dashboard')">Dashboard</button>
+          <button data-page="sources" onclick="showPage('sources')">Sources</button>
+          <button data-page="triggers" onclick="showPage('triggers')">Triggers</button>
+          <button data-page="actions" onclick="showPage('actions')">Actions</button>
+          <button data-page="rules" onclick="showPage('rules')">Rules</button>
+          <button data-page="people" onclick="showPage('people')">People</button>
+          <button data-page="unknown" onclick="showPage('unknown')">Unknown Inbox</button>
+          <button data-page="crop" onclick="showPage('crop')">Crop Editor</button>
+          <button data-page="logs" onclick="showPage('logs')">Logs</button>
+          <button data-page="settings" onclick="showPage('settings')">Settings</button>
+        </nav>
+      </aside>
+
+      <div class="content">
+        <div class="topbar">
+          <div>
+            <h2 id="pageTitle" class="page-title">Dashboard</h2>
+            <div id="pageSubtitle" class="page-subtitle">Systemstatus und letzte Erkennungen</div>
+          </div>
+          <button class="secondary" onclick="loadAll()">Aktualisieren</button>
+        </div>
+
+  <main>
+    <section id="page-dashboard" class="page active">
+      <section class="grid">
+        <div class="card">
+          <div class="muted">Sources</div>
+          <div id="sourcesCount" class="metric">–</div>
+        </div>
+        <div class="card">
+          <div class="muted">Triggers</div>
+          <div id="triggersCount" class="metric">–</div>
+        </div>
+        <div class="card">
+          <div class="muted">Actions</div>
+          <div id="actionsCount" class="metric">–</div>
+        </div>
+        <div class="card">
+          <div class="muted">Rules</div>
+          <div id="rulesCount" class="metric">–</div>
+        </div>
+      </section>
+
+      <section class="layout">
+        <div class="card">
+          <h2>System</h2>
+          <div id="systemInfo" class="notice">Lade...</div>
+
+          <hr style="border-color: var(--line); border-style: solid; border-width: 1px 0 0; margin: 20px 0;">
+
+          <h2>Manueller Test</h2>
+          <div class="row">
+            <select id="sourceSelect"></select>
+            <button onclick="manualRun()">Source testen</button>
+            <button class="secondary" onclick="loadLatestFrame()">Letzten Frame laden</button>
+          </div>
+          <div id="manualResult" class="notice"></div>
+
+          <div style="margin-top:16px;">
+            <img id="framePreview" class="preview" alt="Letzter Frame" onerror="handleFrameError()" />
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Aktive Konfiguration</h2>
+          <div id="configLists" class="list"></div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top:18px;">
+        <h2>Letzte Events</h2>
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Zeit</th>
+                <th>Trigger</th>
+                <th>Source</th>
+                <th>Status</th>
+                <th>Person</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="visitsTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section id="page-sources" class="page">
+      <div class="card">
+        <h2>Sources verwalten</h2>
+
+        <div class="row" style="margin-bottom:12px;">
+          <select id="sourceEditorSelect" onchange="loadSourceIntoForm()"></select>
+          <button onclick="newSource()">Neue Source</button>
+          <button class="danger" onclick="deleteSource()">Source löschen</button>
+        </div>
+
+        <div class="formgrid">
+          <label>
+            Source ID
+            <input id="sourceId" placeholder="haustuer_ring">
+          </label>
+
+          <label>
+            Anzeigename
+            <input id="sourceDisplayName" placeholder="Haustür Ring">
+          </label>
+
+          <label>
+            Typ
+            <select id="sourceType">
+              <option value="rtsp">RTSP Kamera</option>
+              <option value="usb_camera">USB Kamera</option>
+            </select>
+          </label>
+
+          <label>
+            Aktiv
+            <select id="sourceEnabled">
+              <option value="true">Ja</option>
+              <option value="false">Nein</option>
+            </select>
+          </label>
+
+          <label class="wide">
+            RTSP URL
+            <input id="sourceRtspUrl" placeholder="rtsp://...">
+          </label>
+
+          <label class="wide">
+            Frames-Verzeichnis
+            <input id="sourceFramesDir" placeholder="data/frames/haustuer_ring">
+          </label>
+
+          <label>
+            Capture Sekunden
+            <input id="sourceMaxCaptureSeconds" type="number" step="1" min="1">
+          </label>
+
+          <label>
+            Frames pro Sekunde
+            <input id="sourceFps" type="number" step="0.5" min="0.5">
+          </label>
+
+          <label>
+            Frame-Breite
+            <input id="sourceFrameWidth" type="number" step="1" min="320" placeholder="960">
+          </label>
+
+          <label>
+            Recognition aktiv
+            <select id="sourceRecognitionEnabled">
+              <option value="true">Ja</option>
+              <option value="false">Nein</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row" style="margin-top:14px;">
+          <button onclick="saveSourceFromForm()">Source speichern</button>
+        </div>
+
+        <div id="sourceEditorResult" class="notice"></div>
+      </div>
+    </section>
+
+    <section id="page-triggers" class="page">
+      <div class="card">
+        <h2>Triggers verwalten</h2>
+
+        <div class="row" style="margin-bottom:12px;">
+          <select id="triggerEditorSelect" onchange="loadTriggerIntoForm()"></select>
+          <button onclick="newTrigger()">Neuer Trigger</button>
+          <button class="danger" onclick="deleteTrigger()">Trigger löschen</button>
+        </div>
+
+        <div class="formgrid">
+          <label>
+            Trigger ID
+            <input id="triggerId" placeholder="haustuer_ring_ding">
+          </label>
+
+          <label>
+            Anzeigename
+            <input id="triggerDisplayName" placeholder="Haustür Klingel">
+          </label>
+
+          <label>
+            Typ
+            <select id="triggerType">
+              <option value="mqtt">MQTT</option>
+              <option value="manual">Manuell</option>
+              <option value="motion_detection">Motion Detection</option>
+            </select>
+          </label>
+
+          <label>
+            Aktiv
+            <select id="triggerEnabled">
+              <option value="true">Ja</option>
+              <option value="false">Nein</option>
+            </select>
+          </label>
+
+          <label>
+            Source
+            <select id="triggerSource"></select>
+          </label>
+
+          <label>
+            Event Type
+            <input id="triggerEventType" placeholder="doorbell">
+          </label>
+
+          <label class="wide">
+            MQTT Topic
+            <input id="triggerMqttTopic" placeholder="ring/.../ding/state">
+          </label>
+
+          <label>
+            Trigger Payload
+            <input id="triggerPayload" placeholder="ON">
+          </label>
+
+          <label>
+            Cooldown Sekunden
+            <input id="triggerCooldown" type="number" step="1" min="0">
+          </label>
+        </div>
+
+        <div class="row" style="margin-top:14px;">
+          <button onclick="saveTriggerFromForm()">Trigger speichern</button>
+        </div>
+
+        <div id="triggerEditorResult" class="notice"></div>
+      </div>
+    </section>
+
+    <section id="page-actions" class="page">
+      <div class="card">
+        <h2>Actions</h2>
+        <p class="muted">Hier verwalten wir später Shelly, Voice Monkey, Home Assistant und HTTP Webhooks.</p>
+        <div id="actionsList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="page-rules" class="page">
+      <div class="card">
+        <h2>Rules</h2>
+        <p class="muted">Hier bauen wir später den Rule Builder.</p>
+        <div id="rulesList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="page-people" class="page">
+      <div class="card">
+        <h2>People</h2>
+        <p class="muted">Personen, Rollen, Gäste, Zeitfenster, Öffnungsrechte und persönliche Ansagen.</p>
+      </div>
+    </section>
+
+    <section id="page-unknown" class="page">
+      <div class="card">
+        <h2>Unknown Inbox</h2>
+        <p class="muted">Unbekannte Erkennungen ansehen und später Personen zuordnen.</p>
+      </div>
+    </section>
+
+    <section id="page-crop" class="page">
+      <div class="card">
+        <h2>Crop Editor</h2>
+        <p class="muted">
+          Stelle hier den Erkennungsbereich pro Kamera ein. Der Rahmen wird als Prozentwerte in der Source gespeichert.
+        </p>
+
+        <div class="row" style="margin-bottom:14px;">
+          <select id="cropSourceSelect" onchange="loadCropSourceIntoEditor()"></select>
+            <button onclick="loadCropPreview()">Preview laden</button>
+            <button onclick="testCropRecognition()">Recognition testen</button>
+            <button onclick="saveCropConfig()">Crop speichern</button>
+          <button class="secondary" onclick="disableCropConfig()">Crop deaktivieren</button>
+        </div>
+
+        <div class="crop-layout">
+          <div>
+            <div id="cropMessage" class="notice">Wähle eine Source und lade ein Preview.</div>
+            <div id="cropRecognitionResult" class="crop-test-result"></div>
+            <div id="cropLoading" class="crop-loading">
+              <div class="spinner"></div>
+              <div>
+                Lade Preview aus der Kamera...<br>
+                <span class="muted">Das kann bei Ring/RTSP einige Sekunden dauern.</span>
+              </div>
+            </div>
+
+            <div id="cropCanvasWrap" class="crop-canvas-wrap">
+              <img id="cropPreviewImage" class="crop-preview" alt="Crop Preview" />
+              <div id="cropBox" class="crop-box">
+                <div class="crop-handle"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card crop-side-card">
+            <h2>Crop-Werte</h2>
+
+            <div class="preset-grid">
+              <button class="secondary" onclick="applyCropPreset('standard')">Standard</button>
+              <button class="secondary" onclick="applyCropPreset('center')">Zentriert</button>
+              <button class="secondary" onclick="applyCropPreset('door')">Türbereich</button>
+              <button class="secondary" onclick="applyCropPreset('wide')">Breit</button>
+              <button class="secondary" onclick="applyCropPreset('close')">Nah</button>
+            </div>
+
+            <label>
+              Aktiv
+              <select id="cropEnabled">
+                <option value="true">Ja</option>
+                <option value="false">Nein</option>
+              </select>
+            </label>
+
+            <label style="margin-top:12px;">
+              Preview-/Frame-Breite
+              <select id="cropFrameWidth" onchange="saveCropFrameWidthLocal()">
+                <option value="640">640 px – schnell</option>
+                <option value="960">960 px – Standard</option>
+                <option value="1280">1280 px – genauer</option>
+                <option value="1600">1600 px – langsam</option>
+              </select>
+            </label>
+
+            <div class="formgrid" style="margin-top:12px;">
+              <label>
+                Links
+                <input id="cropXPct" type="number" step="0.001" min="0" max="1" onchange="applyCropInputsToBox()">
+              </label>
+
+              <label>
+                Oben
+                <input id="cropYPct" type="number" step="0.001" min="0" max="1" onchange="applyCropInputsToBox()">
+              </label>
+
+              <label>
+                Breite
+                <input id="cropWidthPct" type="number" step="0.001" min="0.05" max="1" onchange="applyCropInputsToBox()">
+              </label>
+
+              <label>
+                Höhe
+                <input id="cropHeightPct" type="number" step="0.001" min="0.05" max="1" onchange="applyCropInputsToBox()">
+              </label>
+            </div>
+            <div id="cropWarning" class="crop-warning"></div>
+            <div id="cropSaveStatus" class="crop-save-status"></div>
+            <div class="notice">
+              Tipp: Der Rahmen sollte den typischen Stehbereich abdecken, nicht nur ein einzelnes Gesicht.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-logs" class="page">
+      <div class="card">
+        <h2>Logs</h2>
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Zeit</th>
+                <th>Trigger</th>
+                <th>Source</th>
+                <th>Status</th>
+                <th>Person</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="visitsTableLogs"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-settings" class="page">
+      <div class="card">
+        <h2>settings.json Editor</h2>
+        <div class="row" style="margin-bottom:12px;">
+          <button onclick="saveConfig()">Speichern mit Backup</button>
+          <button class="secondary" onclick="formatConfig()">Formatieren</button>
+        </div>
+        <textarea id="configEditor"></textarea>
+        <div id="saveResult" class="notice"></div>
+      </div>
+    </section>
+  </main>
+      </div>
+    </div>
+  <script>
+    let currentConfig = null;
+    let cropDragState = null;
+
+    function renderCropSourceSelect(config) {
+      const select = document.getElementById("cropSourceSelect");
+      if (!select) return;
+
+      select.innerHTML = "";
+
+      Object.entries(config.sources || {}).forEach(([id, source]) => {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = `${source.display_name || id} (${id})`;
+        select.appendChild(option);
+      });
+
+      if (select.options.length > 0) {
+        select.selectedIndex = 0;
+        loadCropSourceIntoEditor();
+      }
+    }
+
+    function loadCropSourceIntoEditor() {
+      if (!currentConfig) return;
+
+      const sourceId = document.getElementById("cropSourceSelect").value;
+      const source = currentConfig.sources?.[sourceId];
+
+      if (!source) return;
+
+      const crop = source.crop || {
+        enabled: false,
+        width_pct: 0.6,
+        height_pct: 0.75,
+        x_pct: 0.2,
+        y_pct: 0.18
+      };
+
+      document.getElementById("cropEnabled").value = crop.enabled ? "true" : "false";
+      document.getElementById("cropXPct").value = Number(crop.x_pct ?? 0.2).toFixed(3);
+      document.getElementById("cropYPct").value = Number(crop.y_pct ?? 0.18).toFixed(3);
+      document.getElementById("cropWidthPct").value = Number(crop.width_pct ?? 0.6).toFixed(3);
+      document.getElementById("cropHeightPct").value = Number(crop.height_pct ?? 0.75).toFixed(3);
+      const frameWidth = source.frame_width ?? currentConfig.frame_width ?? 960;
+      document.getElementById("cropFrameWidth").value = String(frameWidth);
+
+      applyCropInputsToBox(false);
+
+      setCropSaveStatus("", "");
+
+      document.getElementById("cropMessage").textContent =
+        "Source geladen. Klicke auf 'Preview laden', um ein aktuelles Bild zu holen.";
+    }
+
+    function saveCropFrameWidthLocal() {
+      if (!currentConfig) return;
+
+      const sourceId = document.getElementById("cropSourceSelect").value;
+
+      if (!sourceId || !currentConfig.sources?.[sourceId]) {
+        return;
+      }
+
+      currentConfig.sources[sourceId].frame_width =
+        Number(document.getElementById("cropFrameWidth").value);
+
+      document.getElementById("configEditor").value =
+        JSON.stringify(currentConfig, null, 2);
+
+      markCropDirty("Frame-Breite geändert.");
+      document.getElementById("cropMessage").textContent =
+        "Frame-Breite im Editor geändert.";
+    }
+
+    function applyCropPreset(presetName) {
+      const presets = {
+        standard: {
+          enabled: true,
+          x_pct: 0.20,
+          y_pct: 0.18,
+          width_pct: 0.60,
+          height_pct: 0.75,
+          label: "Preset Standard gesetzt."
+        },
+        center: {
+          enabled: true,
+          x_pct: 0.25,
+          y_pct: 0.15,
+          width_pct: 0.50,
+          height_pct: 0.75,
+          label: "Preset Zentriert gesetzt."
+        },
+        door: {
+          enabled: true,
+          x_pct: 0.30,
+          y_pct: 0.16,
+          width_pct: 0.48,
+          height_pct: 0.74,
+          label: "Preset Türbereich gesetzt."
+        },
+        wide: {
+          enabled: true,
+          x_pct: 0.12,
+          y_pct: 0.12,
+          width_pct: 0.76,
+          height_pct: 0.80,
+          label: "Preset Breit gesetzt."
+        },
+        close: {
+          enabled: true,
+          x_pct: 0.32,
+          y_pct: 0.10,
+          width_pct: 0.42,
+          height_pct: 0.65,
+          label: "Preset Naher Besucher gesetzt."
+        }
+      };
+
+      const preset = presets[presetName];
+
+      if (!preset) {
+        return;
+      }
+
+      document.getElementById("cropEnabled").value = preset.enabled ? "true" : "false";
+      document.getElementById("cropXPct").value = preset.x_pct.toFixed(3);
+      document.getElementById("cropYPct").value = preset.y_pct.toFixed(3);
+      document.getElementById("cropWidthPct").value = preset.width_pct.toFixed(3);
+      document.getElementById("cropHeightPct").value = preset.height_pct.toFixed(3);
+
+      applyCropInputsToBox();
+      validateCropUi();
+
+      document.getElementById("cropMessage").textContent =
+        preset.label + " Mit 'Crop speichern' dauerhaft übernehmen.";
+    }
+
+    function getCropValuesFromInputs(validationMessages = []) {
+      return {
+        enabled: document.getElementById("cropEnabled").value === "true",
+        x_pct: readCropNumber("cropXPct", "Links", 0, 1, validationMessages),
+        y_pct: readCropNumber("cropYPct", "Oben", 0, 1, validationMessages),
+        width_pct: readCropNumber("cropWidthPct", "Breite", 0.05, 1, validationMessages),
+        height_pct: readCropNumber("cropHeightPct", "Höhe", 0.05, 1, validationMessages),
+      };
+    }
+
+    function applyCropInputsToBox(markDirty = true) {
+      const box = document.getElementById("cropBox");
+      if (!box) return;
+
+      const crop = getCropValuesFromInputs();
+
+      if (crop.x_pct + crop.width_pct > 1) {
+        crop.width_pct = 1 - crop.x_pct;
+      }
+
+      if (crop.y_pct + crop.height_pct > 1) {
+        crop.height_pct = 1 - crop.y_pct;
+      }
+
+      box.style.left = `${crop.x_pct * 100}%`;
+      box.style.top = `${crop.y_pct * 100}%`;
+      box.style.width = `${crop.width_pct * 100}%`;
+      box.style.height = `${crop.height_pct * 100}%`;
+      validateCropUi();
+
+      if (markDirty) {
+        markCropDirty();
+      }
+
+    }
+
+    function updateCropInputsFromBox() {
+      const wrap = document.getElementById("cropCanvasWrap");
+      const box = document.getElementById("cropBox");
+
+      if (!wrap || !box || wrap.clientWidth === 0 || wrap.clientHeight === 0) return;
+
+      const x = box.offsetLeft / wrap.clientWidth;
+      const y = box.offsetTop / wrap.clientHeight;
+      const w = box.offsetWidth / wrap.clientWidth;
+      const h = box.offsetHeight / wrap.clientHeight;
+
+      document.getElementById("cropXPct").value = x.toFixed(3);
+      document.getElementById("cropYPct").value = y.toFixed(3);
+      document.getElementById("cropWidthPct").value = w.toFixed(3);
+      document.getElementById("cropHeightPct").value = h.toFixed(3);
+      validateCropUi();
+      markCropDirty("Crop-Rahmen geändert.");
+    }
+
+    async function loadCropPreview() {
+      const sourceId = document.getElementById("cropSourceSelect").value;
+      const img = document.getElementById("cropPreviewImage");
+      const wrap = document.getElementById("cropCanvasWrap");
+      const message = document.getElementById("cropMessage");
+      const loading = document.getElementById("cropLoading");
+
+      message.textContent = "Preview wird angefordert...";
+      loading.style.display = "flex";
+      wrap.style.display = "none";
+
+      img.onerror = () => {
+        loading.style.display = "none";
+        wrap.style.display = "none";
+        message.textContent =
+          "Preview konnte nicht geladen werden. Prüfe RTSP-URL, ffmpeg und ob die Kamera erreichbar ist.";
+      };
+
+      img.onload = () => {
+        loading.style.display = "none";
+        onCropPreviewLoaded();
+      };
+
+      img.src = `/api/crop-preview/${encodeURIComponent(sourceId)}?t=${Date.now()}`;
+    }
+
+    function onCropPreviewLoaded() {
+      const wrap = document.getElementById("cropCanvasWrap");
+      const message = document.getElementById("cropMessage");
+
+      wrap.style.display = "block";
+      applyCropInputsToBox();
+      message.textContent = "Preview geladen. Ziehe den Rahmen oder ändere die Werte rechts.";
+    }
+
+    function validateCropUi() {
+      const warning = document.getElementById("cropWarning");
+      if (!warning) return true;
+
+      const messages = [];
+      const crop = getCropValuesFromInputs(messages);
+      let isError = false;
+
+      const area = crop.width_pct * crop.height_pct;
+
+      if (crop.x_pct + crop.width_pct > 1.001) {
+        messages.push("Crop liegt rechts außerhalb des Bildes.");
+        isError = true;
+      }
+
+      if (crop.y_pct + crop.height_pct > 1.001) {
+        messages.push("Crop liegt unten außerhalb des Bildes.");
+        isError = true;
+      }
+
+      if (crop.width_pct < 0.25) {
+        messages.push("Der Crop ist sehr schmal. Personen können seitlich abgeschnitten werden.");
+      }
+
+      if (crop.height_pct < 0.35) {
+        messages.push("Der Crop ist sehr niedrig. Kopf oder Oberkörper können abgeschnitten werden.");
+      }
+
+      if (area < 0.18) {
+        messages.push("Der Crop-Bereich ist insgesamt klein. Das kann bei wechselnden Standpositionen unzuverlässig sein.");
+      }
+
+      if (area > 0.75) {
+        messages.push("Der Crop-Bereich ist sehr groß. Die Erkennung kann langsamer werden und unnötige Bildbereiche prüfen.");
+      }
+
+      if (crop.x_pct < 0.03 || crop.x_pct + crop.width_pct > 0.97) {
+        messages.push("Der Crop liegt sehr nah am linken oder rechten Bildrand. Prüfe, ob dort wirklich Personen stehen.");
+      }
+
+      if (crop.y_pct < 0.03) {
+        messages.push("Der Crop beginnt sehr weit oben. Viel Himmel/Wand kann unnötig mitgeprüft werden.");
+      }
+
+      if (crop.y_pct + crop.height_pct > 0.98) {
+        messages.push("Der Crop reicht sehr weit nach unten. Boden/Straße kann unnötig mitgeprüft werden.");
+      }
+
+      if (!messages.length) {
+        warning.className = "crop-warning";
+        warning.textContent = "";
+        return true;
+      }
+
+      warning.className = isError ? "crop-warning active error" : "crop-warning active";
+      warning.textContent = messages.join("\n");
+
+      return !isError;
+    }
+
+    function setCropSaveStatus(type, text) {
+      const status = document.getElementById("cropSaveStatus");
+      if (!status) return;
+
+      if (!text) {
+        status.className = "crop-save-status";
+        status.textContent = "";
+        return;
+      }
+
+      status.className = `crop-save-status active ${type}`;
+      status.textContent = text;
+    }
+
+    function markCropDirty(reason = "Änderung noch nicht gespeichert.") {
+      setCropSaveStatus("dirty", reason + " Mit 'Crop speichern' dauerhaft übernehmen.");
+    }
+
+    function markCropSaved(text = "Gespeichert. Wird beim nächsten Trigger verwendet.") {
+      setCropSaveStatus("saved", text);
+    }
+
+    function markCropSaveError(text = "Speichern fehlgeschlagen.") {
+      setCropSaveStatus("error", text);
+    }
+
+    async function saveCropConfig() {
+      if (!currentConfig) return;
+
+      const sourceId = document.getElementById("cropSourceSelect").value;
+
+      if (!sourceId || !currentConfig.sources?.[sourceId]) {
+        alert("Keine gültige Source ausgewählt.");
+        return;
+      }
+
+      const validationMessages = [];
+      const crop = getCropValuesFromInputs(validationMessages);
+
+      if (validationMessages.length > 0) {
+        markCropSaveError("Crop-Werte sind ungültig. Bitte Warnung prüfen.");
+        validateCropUi();
+        alert("Crop-Werte sind ungültig:\n\n" + validationMessages.join("\n"));
+        return;
+      }
+
+      if (!validateCropUi()) {
+        markCropSaveError("Crop ist ungültig. Bitte Warnung prüfen.");
+        alert("Crop ist ungültig. Bitte Warnung prüfen.");
+        return;
+      }
+
+      if (crop.x_pct + crop.width_pct > 1) {
+        markCropSaveError("Crop ist zu breit oder liegt zu weit rechts.");
+        alert("Crop ist zu breit oder liegt zu weit rechts.");
+        return;
+      }
+
+      if (crop.y_pct + crop.height_pct > 1) {
+        markCropSaveError("Crop ist zu hoch oder liegt zu weit unten.");
+        alert("Crop ist zu hoch oder liegt zu weit unten.");
+        return;
+      }
+
+      currentConfig.sources[sourceId].frame_width =
+        Number(document.getElementById("cropFrameWidth").value);
+
+      currentConfig.sources[sourceId].crop = crop;
+
+      document.getElementById("configEditor").value =
+        JSON.stringify(currentConfig, null, 2);
+
+      try {
+        const result = await api("/api/config", {
+          method: "POST",
+          body: JSON.stringify(currentConfig)
+        });
+
+        markCropSaved("Crop gespeichert. Wird beim nächsten Trigger verwendet.");
+
+        document.getElementById("cropMessage").textContent =
+          result.message || "Crop gespeichert.";
+
+      } catch (err) {
+        markCropSaveError("Speichern fehlgeschlagen: " + err.message);
+
+        document.getElementById("cropMessage").textContent =
+          "Crop konnte nicht gespeichert werden.";
+      }
+    }
+
+    async function testCropRecognition() {
+      if (!currentConfig) return;
+
+      const sourceId = document.getElementById("cropSourceSelect").value;
+      const resultBox = document.getElementById("cropRecognitionResult");
+      const message = document.getElementById("cropMessage");
+
+      if (!sourceId || !currentConfig.sources?.[sourceId]) {
+        alert("Keine gültige Source ausgewählt.");
+        return;
+      }
+
+      const crop = getCropValuesFromInputs();
+      const frameWidth = Number(document.getElementById("cropFrameWidth").value || 960);
+
+      resultBox.className = "crop-test-result";
+      resultBox.style.display = "block";
+      resultBox.textContent =
+        "Recognition-Test läuft...\nBitte stelle dich währenddessen in den Crop-Bereich.";
+
+      message.textContent = "Crop Recognition Test läuft...";
+
+      try {
+        const data = await api(`/api/crop-recognition-test/${encodeURIComponent(sourceId)}`, {
+          method: "POST",
+          body: JSON.stringify({
+            frame_width: frameWidth,
+            crop: crop
+          })
+        });
+
+        const recognition = data.result || {};
+        const status = recognition.status || "unknown";
+        const subject = recognition.subject || "-";
+        const similarity = Number(recognition.similarity || 0);
+        const distance = Number(recognition.distance || 999);
+        const reference = recognition.reference || "-";
+        const bestCandidate = recognition.best_candidate || "-";
+
+        if (status === "known") {
+          resultBox.className = "crop-test-result success";
+          resultBox.textContent =
+            `Gesicht erkannt.\n` +
+            `Person: ${subject}\n` +
+            `Similarity: ${similarity.toFixed(3)}\n` +
+            `Distance: ${distance.toFixed(3)}\n` +
+            `Referenz: ${reference}`;
+        } else if (status === "unknown") {
+          resultBox.className = "crop-test-result warn";
+          resultBox.textContent =
+            `Gesicht erkannt, aber nicht sicher bekannt.\n` +
+            `Bester Kandidat: ${bestCandidate}\n` +
+            `Similarity: ${similarity.toFixed(3)}\n` +
+            `Distance: ${distance.toFixed(3)}\n` +
+            `Das kann bedeuten: Person unbekannt, Licht schlecht oder Threshold zu streng.`;
+        } else if (status === "no_face") {
+          resultBox.className = "crop-test-result warn";
+          resultBox.textContent =
+            `Kein Gesicht im Crop erkannt.\n` +
+            `Mögliche Gründe:\n` +
+            `- niemand steht im Crop-Bereich\n` +
+            `- Crop ist falsch gesetzt\n` +
+            `- Gesicht ist zu klein oder zu dunkel\n` +
+            `- Person steht zu weit am Rand`;
+        } else {
+          resultBox.className = "crop-test-result error";
+          resultBox.textContent =
+            `Recognition-Test konnte kein verwertbares Ergebnis erzeugen.\n` +
+            `Status: ${status}\n` +
+            `Fehler: ${recognition.error || "-"}`;
+        }
+
+        message.textContent = "Crop Recognition Test abgeschlossen.";
+
+      } catch (err) {
+        resultBox.className = "crop-test-result error";
+        resultBox.textContent = "Fehler beim Crop Recognition Test:\n" + err.message;
+        message.textContent = "Crop Recognition Test fehlgeschlagen.";
+      }
+    }
+
+    async function disableCropConfig() {
+      if (!currentConfig) return;
+
+      const sourceId = document.getElementById("cropSourceSelect").value;
+
+      if (!sourceId || !currentConfig.sources?.[sourceId]) {
+        alert("Keine gültige Source ausgewählt.");
+        return;
+      }
+
+      currentConfig.sources[sourceId].crop = {
+        enabled: false,
+        width_pct: 1,
+        height_pct: 1,
+        x_pct: 0,
+        y_pct: 0
+      };
+
+      loadCropSourceIntoEditor();
+
+      document.getElementById("configEditor").value = JSON.stringify(currentConfig, null, 2);
+
+      try {
+        const result = await api("/api/config", {
+          method: "POST",
+          body: JSON.stringify(currentConfig)
+        });
+
+        markCropSaved("Crop deaktiviert und gespeichert.");
+
+        document.getElementById("cropMessage").textContent =
+          result.message || "Crop deaktiviert.";
+
+      } catch (err) {
+        markCropSaveError("Crop konnte nicht deaktiviert werden: " + err.message);
+      }
+    }
+
+    function readCropNumber(id, label, min, max, messages) {
+      const input = document.getElementById(id);
+      const raw = String(input.value ?? "").trim();
+
+      if (raw === "") {
+        messages.push(`${label} darf nicht leer sein.`);
+        return min;
+      }
+
+      const value = Number(raw.replace(",", "."));
+
+      if (Number.isNaN(value)) {
+        messages.push(`${label} muss eine Zahl sein.`);
+        return min;
+      }
+
+      if (value < min || value > max) {
+        messages.push(`${label} muss zwischen ${min} und ${max} liegen.`);
+      }
+
+      return clamp(value, min, max);
+    }
+
+    function initCropBoxDrag() {
+      const wrap = document.getElementById("cropCanvasWrap");
+      const box = document.getElementById("cropBox");
+      const handle = box?.querySelector(".crop-handle");
+
+      if (!wrap || !box || !handle) return;
+
+      box.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+
+        const isResize = event.target === handle;
+
+        cropDragState = {
+          mode: isResize ? "resize" : "move",
+          startX: event.clientX,
+          startY: event.clientY,
+          boxLeft: box.offsetLeft,
+          boxTop: box.offsetTop,
+          boxWidth: box.offsetWidth,
+          boxHeight: box.offsetHeight,
+        };
+
+        box.setPointerCapture(event.pointerId);
+      });
+
+      box.addEventListener("pointermove", (event) => {
+        if (!cropDragState) return;
+
+        const dx = event.clientX - cropDragState.startX;
+        const dy = event.clientY - cropDragState.startY;
+
+        const wrapWidth = wrap.clientWidth;
+        const wrapHeight = wrap.clientHeight;
+
+        if (cropDragState.mode === "move") {
+          let newLeft = cropDragState.boxLeft + dx;
+          let newTop = cropDragState.boxTop + dy;
+
+          newLeft = clamp(newLeft, 0, wrapWidth - cropDragState.boxWidth);
+          newTop = clamp(newTop, 0, wrapHeight - cropDragState.boxHeight);
+
+          box.style.left = `${newLeft}px`;
+          box.style.top = `${newTop}px`;
+        }
+
+        if (cropDragState.mode === "resize") {
+          let newWidth = cropDragState.boxWidth + dx;
+          let newHeight = cropDragState.boxHeight + dy;
+
+          newWidth = clamp(newWidth, 40, wrapWidth - cropDragState.boxLeft);
+          newHeight = clamp(newHeight, 40, wrapHeight - cropDragState.boxTop);
+
+          box.style.width = `${newWidth}px`;
+          box.style.height = `${newHeight}px`;
+        }
+
+        updateCropInputsFromBox();
+      });
+
+      box.addEventListener("pointerup", () => {
+        cropDragState = null;
+        updateCropInputsFromBox();
+      });
+
+      box.addEventListener("pointercancel", () => {
+        cropDragState = null;
+      });
+    }
+
+    function clamp(value, min, max) {
+      if (Number.isNaN(value)) return min;
+      return Math.max(min, Math.min(max, value));
+    }
+
+    const PAGE_META = {
+      dashboard: {
+        title: "Dashboard",
+        subtitle: "Systemstatus, letzter Lauf und letzte Events"
+      },
+      sources: {
+        title: "Sources",
+        subtitle: "Bildquellen wie RTSP, Ring oder später USB-Kameras verwalten"
+      },
+      triggers: {
+        title: "Triggers",
+        subtitle: "Auslöser wie MQTT, Motion Detection oder manuelle Tests verwalten"
+      },
+      actions: {
+        title: "Actions",
+        subtitle: "Shelly, Voice Monkey, Home Assistant und Webhooks konfigurieren"
+      },
+      rules: {
+        title: "Rules",
+        subtitle: "Wenn-dann-Logik für Erkennung und Aktionen"
+      },
+      people: {
+        title: "People",
+        subtitle: "Personen, Rollen, Gäste und Öffnungsrechte"
+      },
+      unknown: {
+        title: "Unknown Inbox",
+        subtitle: "Unbekannte Erkennungen prüfen und später zuordnen"
+      },
+      crop: {
+        title: "Crop Editor",
+        subtitle: "Erkennungsbereich pro Kamera visuell einstellen"
+      },
+      logs: {
+        title: "Logs",
+        subtitle: "Besuche, Erkennungen und ausgeführte Aktionen"
+      },
+      settings: {
+        title: "Settings",
+        subtitle: "Direkter JSON-Editor mit Backup"
+      }
+    };
+
+    function showPage(page) {
+      document.querySelectorAll(".page").forEach(el => {
+        el.classList.remove("active");
+      });
+
+      const pageEl = document.getElementById(`page-${page}`);
+      if (pageEl) {
+        pageEl.classList.add("active");
+      }
+
+      document.querySelectorAll(".nav button").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.page === page);
+      });
+
+      const meta = PAGE_META[page] || PAGE_META.dashboard;
+      document.getElementById("pageTitle").textContent = meta.title;
+      document.getElementById("pageSubtitle").textContent = meta.subtitle;
+
+      location.hash = page;
+    }
+
+    function initPageFromHash() {
+      const page = location.hash.replace("#", "") || "dashboard";
+      showPage(PAGE_META[page] ? page : "dashboard");
+    }
+
+    function handleFrameError() {
+      const img = document.getElementById("framePreview");
+      img.removeAttribute("src");
+
+      const result = document.getElementById("manualResult");
+      if (result) {
+        result.textContent = "Noch kein Frame vorhanden. Starte erst einen Testlauf oder klicke später erneut auf 'Letzten Frame laden'.";
+      }
+    }
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, {
+        headers: { "Content-Type": "application/json" },
+        ...options
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`${res.status}: ${text}`);
+      }
+
+      return res.json();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+    
+    function boolFromSelect(id) {
+      return document.getElementById(id).value === "true";
+    }
+
+    function setSelectBool(id, value) {
+      document.getElementById(id).value = value ? "true" : "false";
+    }
+
+    function numberOrDefault(id, fallback) {
+      const value = document.getElementById(id).value;
+      if (value === "" || value === null || value === undefined) return fallback;
+      return Number(value);
+    }
+
+    function renderSourceEditorSelect(config) {
+      const select = document.getElementById("sourceEditorSelect");
+      const triggerSource = document.getElementById("triggerSource");
+
+      select.innerHTML = "";
+      triggerSource.innerHTML = "";
+
+      Object.entries(config.sources || {}).forEach(([id, source]) => {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = `${source.display_name || id} (${id})`;
+        select.appendChild(option);
+
+        const option2 = document.createElement("option");
+        option2.value = id;
+        option2.textContent = `${source.display_name || id} (${id})`;
+        triggerSource.appendChild(option2);
+      });
+
+      if (select.options.length > 0) {
+        select.selectedIndex = 0;
+        loadSourceIntoForm();
+      }
+    }
+
+    function renderTriggerEditorSelect(config) {
+      const select = document.getElementById("triggerEditorSelect");
+      select.innerHTML = "";
+
+      Object.entries(config.triggers || {}).forEach(([id, trigger]) => {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = `${trigger.display_name || id} (${id})`;
+        select.appendChild(option);
+      });
+
+      if (select.options.length > 0) {
+        select.selectedIndex = 0;
+        loadTriggerIntoForm();
+      }
+    }
+
+    function loadSourceIntoForm() {
+      if (!currentConfig) return;
+
+      const selectedId = document.getElementById("sourceEditorSelect").value;
+      const source = (currentConfig.sources || {})[selectedId];
+
+      if (!source) return;
+
+      document.getElementById("sourceId").value = selectedId;
+      document.getElementById("sourceDisplayName").value = source.display_name || "";
+      document.getElementById("sourceType").value = source.type || "rtsp";
+      setSelectBool("sourceEnabled", source.enabled !== false);
+      document.getElementById("sourceRtspUrl").value = source.rtsp_url || "";
+      document.getElementById("sourceFramesDir").value = source.frames_dir || `data/frames/${selectedId}`;
+      document.getElementById("sourceMaxCaptureSeconds").value = source.max_capture_seconds ?? currentConfig.max_capture_seconds ?? 10;
+      document.getElementById("sourceFps").value = source.frames_per_second ?? currentConfig.frames_per_second ?? 2;
+      document.getElementById("sourceFrameWidth").value = source.frame_width ?? currentConfig.frame_width ?? 960;
+      setSelectBool("sourceRecognitionEnabled", source.recognition_enabled !== false);
+
+      document.getElementById("sourceEditorResult").textContent = "";
+    }
+
+    function newSource() {
+      const newId = "neue_source";
+
+      document.getElementById("sourceId").value = newId;
+      document.getElementById("sourceDisplayName").value = "Neue Source";
+      document.getElementById("sourceType").value = "rtsp";
+      setSelectBool("sourceEnabled", true);
+      document.getElementById("sourceRtspUrl").value = "";
+      document.getElementById("sourceFramesDir").value = `data/frames/${newId}`;
+      document.getElementById("sourceMaxCaptureSeconds").value = currentConfig?.max_capture_seconds ?? 10;
+      document.getElementById("sourceFps").value = currentConfig?.frames_per_second ?? 2;
+      document.getElementById("sourceFrameWidth").value = currentConfig?.frame_width ?? 960;
+      setSelectBool("sourceRecognitionEnabled", true);
+
+      document.getElementById("sourceEditorResult").textContent =
+        "Neue Source vorbereitet. ID anpassen und speichern.";
+    }
+
+    function saveSourceFromForm() {
+      if (!currentConfig) return;
+
+      const oldId = document.getElementById("sourceEditorSelect").value;
+      const sourceId = document.getElementById("sourceId").value.trim();
+
+      if (!sourceId) {
+        alert("Source ID darf nicht leer sein.");
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9_-]+$/.test(sourceId)) {
+        alert("Source ID darf nur Buchstaben, Zahlen, _ und - enthalten.");
+        return;
+      }
+
+      currentConfig.sources = currentConfig.sources || {};
+
+      const source = {
+        enabled: boolFromSelect("sourceEnabled"),
+        type: document.getElementById("sourceType").value,
+        display_name: document.getElementById("sourceDisplayName").value.trim() || sourceId,
+        recognition_enabled: boolFromSelect("sourceRecognitionEnabled"),
+        max_capture_seconds: numberOrDefault("sourceMaxCaptureSeconds", 10),
+        frames_per_second: numberOrDefault("sourceFps", 2),
+        frame_width: numberOrDefault("sourceFrameWidth", 960),
+        frames_dir: document.getElementById("sourceFramesDir").value.trim() || `data/frames/${sourceId}`,
+      };
+
+      if (source.type === "rtsp") {
+        source.rtsp_url = document.getElementById("sourceRtspUrl").value.trim();
+      }
+
+      if (oldId && oldId !== sourceId && currentConfig.sources[oldId]) {
+        delete currentConfig.sources[oldId];
+
+        // Trigger, die auf die alte Source zeigen, automatisch umbiegen.
+        Object.values(currentConfig.triggers || {}).forEach(trigger => {
+          if (trigger.source === oldId) {
+            trigger.source = sourceId;
+          }
+        });
+      }
+
+      currentConfig.sources[sourceId] = source;
+
+      document.getElementById("configEditor").value = JSON.stringify(currentConfig, null, 2);
+      renderSourceEditorSelect(currentConfig);
+      renderTriggerEditorSelect(currentConfig);
+
+      document.getElementById("sourceEditorResult").textContent =
+        "Source im Editor aktualisiert. Zum dauerhaften Speichern oben/unten 'Speichern mit Backup' klicken.";
+    }
+
+    function deleteSource() {
+      if (!currentConfig) return;
+
+      const sourceId = document.getElementById("sourceEditorSelect").value;
+
+      if (!sourceId) return;
+
+      const usedByTriggers = Object.entries(currentConfig.triggers || {})
+        .filter(([_, trigger]) => trigger.source === sourceId)
+        .map(([id]) => id);
+
+      if (usedByTriggers.length > 0) {
+        alert(
+          "Diese Source wird noch von Triggern genutzt:\n" +
+          usedByTriggers.join("\n") +
+          "\n\nBitte zuerst Trigger löschen oder umstellen."
+        );
+        return;
+      }
+
+      if (!confirm(`Source ${sourceId} wirklich löschen?`)) return;
+
+      delete currentConfig.sources[sourceId];
+
+      document.getElementById("configEditor").value = JSON.stringify(currentConfig, null, 2);
+      renderSourceEditorSelect(currentConfig);
+      renderTriggerEditorSelect(currentConfig);
+
+      document.getElementById("sourceEditorResult").textContent =
+        "Source im Editor gelöscht. Zum dauerhaften Speichern 'Speichern mit Backup' klicken.";
+    }
+
+    function loadTriggerIntoForm() {
+      if (!currentConfig) return;
+
+      const selectedId = document.getElementById("triggerEditorSelect").value;
+      const trigger = (currentConfig.triggers || {})[selectedId];
+
+      if (!trigger) return;
+
+      document.getElementById("triggerId").value = selectedId;
+      document.getElementById("triggerDisplayName").value = trigger.display_name || "";
+      document.getElementById("triggerType").value = trigger.type || "mqtt";
+      setSelectBool("triggerEnabled", trigger.enabled !== false);
+      document.getElementById("triggerSource").value = trigger.source || "";
+      document.getElementById("triggerEventType").value = trigger.event_type || "doorbell";
+      document.getElementById("triggerMqttTopic").value = trigger.mqtt_topic || "";
+      document.getElementById("triggerPayload").value = trigger.trigger_payload || "ON";
+      document.getElementById("triggerCooldown").value = trigger.cooldown_seconds ?? currentConfig.source_cooldown_seconds ?? 45;
+
+      document.getElementById("triggerEditorResult").textContent = "";
+    }
+
+    function newTrigger() {
+      const firstSource = Object.keys(currentConfig?.sources || {})[0] || "";
+
+      document.getElementById("triggerId").value = "neuer_trigger";
+      document.getElementById("triggerDisplayName").value = "Neuer Trigger";
+      document.getElementById("triggerType").value = "mqtt";
+      setSelectBool("triggerEnabled", true);
+      document.getElementById("triggerSource").value = firstSource;
+      document.getElementById("triggerEventType").value = "doorbell";
+      document.getElementById("triggerMqttTopic").value = "";
+      document.getElementById("triggerPayload").value = "ON";
+      document.getElementById("triggerCooldown").value = currentConfig?.source_cooldown_seconds ?? 45;
+
+      document.getElementById("triggerEditorResult").textContent =
+        "Neuer Trigger vorbereitet. ID anpassen und speichern.";
+    }
+
+    function saveTriggerFromForm() {
+      if (!currentConfig) return;
+
+      const oldId = document.getElementById("triggerEditorSelect").value;
+      const triggerId = document.getElementById("triggerId").value.trim();
+
+      if (!triggerId) {
+        alert("Trigger ID darf nicht leer sein.");
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9_-]+$/.test(triggerId)) {
+        alert("Trigger ID darf nur Buchstaben, Zahlen, _ und - enthalten.");
+        return;
+      }
+
+      const sourceId = document.getElementById("triggerSource").value;
+
+      if (!sourceId || !currentConfig.sources[sourceId]) {
+        alert("Bitte gültige Source auswählen.");
+        return;
+      }
+
+      const trigger = {
+        enabled: boolFromSelect("triggerEnabled"),
+        type: document.getElementById("triggerType").value,
+        display_name: document.getElementById("triggerDisplayName").value.trim() || triggerId,
+        source: sourceId,
+        event_type: document.getElementById("triggerEventType").value.trim() || "doorbell",
+        cooldown_seconds: numberOrDefault("triggerCooldown", 45),
+      };
+
+      if (trigger.type === "mqtt") {
+        trigger.mqtt_topic = document.getElementById("triggerMqttTopic").value.trim();
+        trigger.trigger_payload = document.getElementById("triggerPayload").value.trim() || "ON";
+
+        if (!trigger.mqtt_topic) {
+          alert("MQTT Trigger braucht ein Topic.");
+          return;
+        }
+      }
+
+      currentConfig.triggers = currentConfig.triggers || {};
+
+      if (oldId && oldId !== triggerId && currentConfig.triggers[oldId]) {
+        delete currentConfig.triggers[oldId];
+
+        // Regeln, die exakt auf Trigger zeigen, automatisch umbiegen.
+        (currentConfig.rules || []).forEach(rule => {
+          if (rule.trigger === oldId) {
+            rule.trigger = triggerId;
+          }
+        });
+      }
+
+      currentConfig.triggers[triggerId] = trigger;
+
+      document.getElementById("configEditor").value = JSON.stringify(currentConfig, null, 2);
+      renderSourceEditorSelect(currentConfig);
+      renderTriggerEditorSelect(currentConfig);
+
+      document.getElementById("triggerEditorResult").textContent =
+        "Trigger im Editor aktualisiert. Zum dauerhaften Speichern 'Speichern mit Backup' klicken.";
+    }
+
+    function deleteTrigger() {
+      if (!currentConfig) return;
+
+      const triggerId = document.getElementById("triggerEditorSelect").value;
+
+      if (!triggerId) return;
+
+      if (!confirm(`Trigger ${triggerId} wirklich löschen?`)) return;
+
+      delete currentConfig.triggers[triggerId];
+
+      // Trigger-Verweise aus Regeln entfernen, Regel aber nicht löschen.
+      (currentConfig.rules || []).forEach(rule => {
+        if (rule.trigger === triggerId) {
+          delete rule.trigger;
+        }
+      });
+
+      document.getElementById("configEditor").value = JSON.stringify(currentConfig, null, 2);
+      renderTriggerEditorSelect(currentConfig);
+
+      document.getElementById("triggerEditorResult").textContent =
+        "Trigger im Editor gelöscht. Zum dauerhaften Speichern 'Speichern mit Backup' klicken.";
+    }  
+
+    async function loadAll() {
+      try {
+        const [status, config, visits] = await Promise.all([
+          api("/api/status"),
+          api("/api/config"),
+          api("/api/visits?limit=25"),
+        ]);
+
+        currentConfig = config;
+
+        document.getElementById("sourcesCount").textContent = status.sources_count;
+        document.getElementById("triggersCount").textContent = status.triggers_count;
+        document.getElementById("actionsCount").textContent = status.actions_count;
+        document.getElementById("rulesCount").textContent = status.rules_count;
+
+        document.getElementById("systemInfo").textContent =
+          `Zeit: ${status.time}\n` +
+          `Letzter Lauf aktiv: ${status.last_run.running}\n` +
+          `Letzter Start: ${status.last_run.last_started || "-"}\n` +
+          `Letztes Ende: ${status.last_run.last_finished || "-"}\n` +
+          `Letzter Fehler: ${status.last_run.last_error || "-"}`;
+
+        renderConfigLists(config);
+        renderSourceSelect(config);
+        renderVisits(visits.items || []);
+        renderSourceEditorSelect(config);
+        renderTriggerEditorSelect(config);
+        renderActionsList(config);
+        renderRulesList(config);
+        renderCropSourceSelect(config);
+        document.getElementById("configEditor").value = JSON.stringify(config, null, 2);
+
+      } catch (err) {
+        alert("Fehler beim Laden: " + err.message);
+      }
+    }
+
+    function renderSourceSelect(config) {
+      const select = document.getElementById("sourceSelect");
+      select.innerHTML = "";
+
+      Object.entries(config.sources || {}).forEach(([id, src]) => {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = `${src.display_name || id} (${id})`;
+        select.appendChild(option);
+      });
+    }
+
+    function renderConfigLists(config) {
+      const container = document.getElementById("configLists");
+      container.innerHTML = "";
+
+      const sections = [
+        ["Sources", config.sources || {}],
+        ["Triggers", config.triggers || {}],
+        ["Actions", config.actions || {}],
+      ];
+
+      sections.forEach(([title, obj]) => {
+        const block = document.createElement("div");
+        block.innerHTML = `<h2>${title}</h2>`;
+
+        Object.entries(obj).forEach(([id, item]) => {
+          const el = document.createElement("div");
+          el.className = "item";
+          el.innerHTML = `
+            <strong>${escapeHtml(item.display_name || id)}</strong>
+            <span class="pill">${escapeHtml(item.type || item.backend || "unknown")}</span>
+            <div class="muted">${escapeHtml(id)}</div>
+          `;
+          block.appendChild(el);
+        });
+
+        container.appendChild(block);
+      });
+    }
+
+    function renderVisits(items) {
+      const targets = [
+        document.getElementById("visitsTable"),
+        document.getElementById("visitsTableLogs")
+      ].filter(Boolean);
+
+      targets.forEach(tbody => {
+        tbody.innerHTML = "";
+
+        items.forEach(row => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${escapeHtml(row.timestamp)}</td>
+            <td>${escapeHtml(row.trigger_id || "")}</td>
+            <td>${escapeHtml(row.source_id || row.source_name || "")}</td>
+            <td>${escapeHtml(row.status)}</td>
+            <td>${escapeHtml(row.subject)}</td>
+            <td>${escapeHtml(row.action)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+    }
+
+    function renderActionsList(config) {
+      const container = document.getElementById("actionsList");
+      if (!container) return;
+
+      container.innerHTML = "";
+
+      Object.entries(config.actions || {}).forEach(([id, action]) => {
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <strong>${escapeHtml(id)}</strong>
+          <span class="pill">${escapeHtml(action.type || "unknown")}</span>
+          <div class="muted">${escapeHtml(action.backend || action.shelly_ip || "")}</div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    function renderRulesList(config) {
+      const container = document.getElementById("rulesList");
+      if (!container) return;
+
+      container.innerHTML = "";
+
+      (config.rules || []).forEach((rule, index) => {
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <strong>${escapeHtml(rule.name || `Regel ${index + 1}`)}</strong>
+          <span class="pill">${rule.enabled === false ? "deaktiviert" : "aktiv"}</span>
+          <div class="muted">
+            Trigger: ${escapeHtml(rule.trigger || "-")} · 
+            Source: ${escapeHtml(rule.source || "-")} ·
+            Event: ${escapeHtml(rule.event_type || "-")}
+          </div>
+          <div class="muted">Actions: ${escapeHtml((rule.actions || []).join(", "))}</div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    async function manualRun() {
+      const sourceId = document.getElementById("sourceSelect").value;
+      const result = document.getElementById("manualResult");
+      result.textContent = "Starte manuellen Lauf...";
+
+      try {
+        const data = await api(`/api/manual-run/${encodeURIComponent(sourceId)}`, {
+          method: "POST"
+        });
+
+        result.textContent = data.message + "\nStatus aktualisiert sich beim nächsten Reload.";
+      } catch (err) {
+        result.textContent = "Fehler: " + err.message;
+      }
+    }
+
+    async function loadLatestFrame() {
+      const sourceId = document.getElementById("sourceSelect").value;
+      const img = document.getElementById("framePreview");
+      img.src = `/api/files/frame?source_id=${encodeURIComponent(sourceId)}&t=${Date.now()}`;
+    }
+
+    function formatConfig() {
+      const textarea = document.getElementById("configEditor");
+      try {
+        const parsed = JSON.parse(textarea.value);
+        textarea.value = JSON.stringify(parsed, null, 2);
+      } catch (err) {
+        alert("JSON ist ungültig: " + err.message);
+      }
+    }
+
+    async function saveConfig() {
+      const result = document.getElementById("saveResult");
+
+      try {
+        const parsed = JSON.parse(document.getElementById("configEditor").value);
+        const data = await api("/api/config", {
+          method: "POST",
+          body: JSON.stringify(parsed)
+        });
+
+        result.textContent = data.message;
+        await loadAll();
+      } catch (err) {
+        result.textContent = "Fehler beim Speichern: " + err.message;
+      }
+    }
+
+    loadAll().then(() => {initCropBoxDrag();initPageFromHash();});
+  </script>
+</body>
+</html>

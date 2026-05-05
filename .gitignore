@@ -249,3 +249,5 @@ rtsp url.txt
 config/settings.json
 compreface/
 .venv/
+scripts/gui_server.py
+web/index.html

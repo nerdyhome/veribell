@@ -13,7 +13,7 @@ Seamless Integration: Connects Ring (via MQTT), Home Assistant (via Webhooks), a
 Web Dashboard: A modern UI to monitor cameras, manage visitors, and visually configure recognition zones (crops).
 Privacy First: All video processing and recognition data stay on your local hardware.
 
-GUI, easy Installer and AirBNB integration coming soon
+-->GUI, further features, translation into english and french, easy Installer and AirBNB integration coming soon
 
 🏗️ Architecture
 
@@ -41,10 +41,12 @@ To get the most out of VeriBell, I recommend the following hardware (affiliate l
 1. Prerequisites
    Docker and Docker Compose installed.
    A Ring account and a Ring-MQTT token.
-   (Optional) A CompreFace or DeepFace instance for AI processing.
+   DeepFace instance for AI processing.
 2. Installation
    Clone this repository.
    Rename settings-git.json to settings.json and fill in your credentials.
+   Rename gui-server-git.py to gui-server.py
+   Rename index-git.html to index.html
    Add your authorized users to people.json.
 3. Launch the stack:
    
