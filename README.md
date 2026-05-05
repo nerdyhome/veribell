@@ -1,7 +1,7 @@
 🔔 VeriBell
 
-AI-Powered Video Doorbell Intelligence & Automated Access ControlVeriBell transforms a 
-standard Ring doorbell into an intelligent access control system. 
+AI-Powered Video Doorbell Intelligence & Automated Access Control
+VeriBell transforms a standard Ring doorbell into an intelligent access control system. 
 By analyzing RTSP video streams in real-time using AI, the system identifies known individuals and triggers 
 automated actions—ranging from opening gates via Shelly devices to personalized voice announcements via Alexa.  
 
